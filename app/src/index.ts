@@ -10,9 +10,9 @@ import puppeteer from 'puppeteer';
 import { Grabber } from './types/grabber';
 import * as PANTONE from '../../assets/data/pantone-list.json';
 import { PantoneInitialI } from './types/pantone-initial.type';
-import { PantoneI } from './types/pantone.type';
+import { Pantone, PantoneI, PantoneSI } from './types/pantone.type';
 import * as fs from 'fs';
-import { loadJson } from './helpers';
+import { loadJson, saveJson } from './helpers';
 
 
 // const PANTONE = 'https://www.e-paint.co.uk/lab-hlc-rgb-lrv-values.asp?cRange=Pantone+C&cRef='
@@ -32,7 +32,8 @@ const main_actual = async () => {
         const browser = await puppeteer.launch({headless: true});
         const page = await browser.newPage();
         await page.setViewport({ width: 1280, height: 800, deviceScaleFactor: 1});
-        const url = 'https://www.e-paint.co.uk/lab-hlc-rgb-lrv-values.asp?cRange=Pantone+C&cRef=2299+C';
+        // const url = 'https://www.e-paint.co.uk/lab-hlc-rgb-lrv-values.asp?cRange=Pantone+C&cRef=2299+C';
+        const url = 'https://www.e-paint.co.uk/lab-hlc-rgb-lrv-values.asp?cRange=Pantone+U&cRef=102+U';
         
         await page.goto(url, {waitUntil: 'networkidle2'});
         // await page.$$eval("document", el => console.log(`element: ${el}`));
@@ -62,21 +63,46 @@ const parseLab = (html: string | undefined) => {
 const main = async () => {
     const grabber = new Grabber();
     await grabber.start();
-    const p: Array<any> = PANTONE;
+    // const p: Array<any> = loadJson<any>('assets/data/pantone-list.json');
+    const p: string[] = await grabber.getPantoneList();
     let pantone: PantoneI[] = [];
-    for (let i = 0; i < Object.keys(p).length - 1; i++) {
-        const element: PantoneInitialI = p[i];
-        const color = await grabber.getColor(element.colorName);
-        pantone.push({
-            ...element,
-            lab: color.Lab
-        });
+    console.log('Lenght: ', p.length);
+    // for (let i = 0; i <  p.length; i++) {
+    for (let i = 0; i <  10; i++) {
+        const element: string = p[i];
+        console.log(element);
+        const color = await grabber.getColor(element, "U");
+        pantone.push(color);
     }
-    fs.writeFileSync('assets/data/pantone.json', JSON.stringify(pantone,null, 2));
     grabber.stop();
+    fs.writeFileSync('assets/data/pantone_u.json', JSON.stringify(pantone,null, 2));
+    console.log('Done');
 }
 
-// main();
+main();
+
+async function getBody(save: boolean = false) {
+    const url='https://www.e-paint.co.uk/lab-hlc-rgb-lrv-values.asp?cRange=Pantone+U&cRef=Yellow+U'
+    const grabber = new Grabber();
+    await grabber.start();
+    await grabber.gotoPage(url);
+    const body = await grabber.getPageText();
+    if (save) {
+        fs.writeFileSync('assets/data/body.txt', body);
+    }
+    await grabber.stop();
+    return body;
+}
+
+// getBody();
+
+async function getPantoneList() {
+    const grabber = new Grabber();
+    await grabber.start();
+    console.log(await grabber.getPantoneList(true));
+}
+
+// getPantoneList();
 
 
 function comparePantones() {
@@ -85,4 +111,86 @@ function comparePantones() {
     pantone.forEach(color => console.log(color.colorName))
 }
 
-comparePantones();
+// comparePantones();
+
+function exportPantone() {
+    const pantone = loadJson<PantoneI>('assets/data/pantone.json');
+    const pantoneS: PantoneSI[] = [];
+    for (let color = 0; color < pantone.length; color++) {
+        const c = pantone[color];
+        const p = new Pantone(c)
+        pantoneS.push(p.color);
+        console.log(p.name);
+    }
+    saveJson(pantoneS, 'assets/data/pantone.json');
+    console.log('Done.');
+}
+
+// exportPantone();
+
+async function parseCmyk() {
+    const body = await getBody();
+    let begins = '<span>CMYK:';
+    let text = body.slice(body.indexOf(begins));
+    begins = '</script>'
+    text = text.slice(text.indexOf(begins) + begins.length);
+    const ends = '</p>';
+    text = text.slice(0, text.indexOf(ends));
+    text = text.replace(/ /g, '');
+
+    console.log(text.split(';').map(el => (Number(el))));
+}
+
+// parseCmyk();
+
+async function parseHex() {
+    const body = await getBody();
+    let begins = '"=""><span>Hex:</span> #';
+    let text = body.slice(body.indexOf(begins) + begins.length);
+    const ends = '</p>';
+    text = text.slice(0, text.indexOf(ends));
+    console.log(text);
+}
+
+// parseHex();
+
+async function parseHcl() {
+    const body = await getBody();
+    const result: number[] = []
+    // H
+    let begins = '<span>H</span>';
+    let text = body.slice(body.indexOf(begins) + begins.length);
+    begins = '">';
+    text = text.slice(body.indexOf(begins));
+    let ends = '</p>';
+    text = text.slice(0, text.indexOf(ends));
+    text = text.replace(/&nbsp;/g, '').replace(/\n/g, '');
+    result.push(parseFloat(text));
+
+
+    //L
+    begins = '</p>\n\n</div>\n<div>\n<span>L</span>';
+    text = body.slice(body.indexOf(begins) + begins.length);
+    begins = '">';
+    text = text.slice(body.indexOf(begins));
+    ends = '</p>';
+    text = text.slice(0, text.indexOf(ends));
+    text = text.replace(/&nbsp;/g, '').replace(/\n/g, '');
+    result.push(parseFloat(text));
+
+    //C
+    begins = '</p>\n\n</div>\n<div>\n<span>L</span>';
+    text = body.slice(body.indexOf(begins) + begins.length);
+    begins = '<span>C</span>';
+    text = body.slice(body.indexOf(begins) + begins.length);
+    ends = '</p>';
+    begins = '">';
+    text = text.slice(body.indexOf(begins));
+    text = text.slice(0, text.indexOf(ends));
+    text = text.replace(/&nbsp;/g, '').replace(/\n/g, '');
+    result.push(parseFloat(text));
+
+    return result;
+}
+
+// parseHcl();
