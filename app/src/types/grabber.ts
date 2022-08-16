@@ -42,9 +42,12 @@ export class Grabber {
     }
 
     async getColor(color: string, pallete: string = 'C'): Promise<PantoneI> {
+        let url = this.baseUrl;
+        url = url.replace(/cRange=Pantone\+U/, `cRange=Pantone+${pallete}`)
+
         let colorName: string = `${color} ${pallete}`;
         // pallete = pallete === 'C'? 'C' : 'U'
-        let url = this.baseUrl + color + '+' + pallete;
+        url = url + color + '+' + pallete;
         // url = url.replace(/.$/, pallete);
         console.log(url);
         await this.gotoPage(url);

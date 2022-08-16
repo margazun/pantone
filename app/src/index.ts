@@ -67,15 +67,17 @@ const main = async () => {
     const p: string[] = await grabber.getPantoneList();
     let pantone: PantoneI[] = [];
     console.log('Lenght: ', p.length);
-    // for (let i = 0; i <  p.length; i++) {
-    for (let i = 0; i <  10; i++) {
+    for (let i = 0; i <  p.length; i++) {
+    // for (let i = 0; i <  2; i++) {
         const element: string = p[i];
         console.log(element);
-        const color = await grabber.getColor(element, "U");
-        pantone.push(color);
+        const colorU = await grabber.getColor(element, "U");
+        pantone.push(colorU);
+        const colorC = await grabber.getColor(element, "C");
+        pantone.push(colorC);
     }
     grabber.stop();
-    fs.writeFileSync('assets/data/pantone_u.json', JSON.stringify(pantone,null, 2));
+    fs.writeFileSync('assets/data/pantones.json', JSON.stringify(pantone,null, 2));
     console.log('Done');
 }
 
