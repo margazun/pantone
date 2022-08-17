@@ -1,9 +1,10 @@
 import * as puppeteer from 'puppeteer';
 import * as fs from 'fs';
 
-import { PantoneI, PantoneSI } from './pantone.type';
+import { PantoneI } from './pantone.type';
 import { getConfig } from '../config';
 import { ConfigT } from './config';
+import { loadJson, saveJson } from '../helpers';
 
 export class Grabber {
     private brouser: any;
@@ -229,5 +230,22 @@ export class Grabber {
             hasUpdate: result.length !== 0,
             result
         };
+    }
+
+    async update(list: string[]): Promise<boolean> {
+        let updatedColors: PantoneI[] = [];
+        for (let i = 0; i < list.length; i++) {
+            const color = list[i];
+            const newColor = await this.getColor(color);
+            updatedColors.push(newColor);
+        }
+        const config = getConfig('_env');
+        const pantones = loadJson<PantoneI[]>(config.files.pantones);
+        const newPantones = [
+            ...pantones,
+            ...updatedColors
+        ];
+        saveJson(newPantones, config.files.pantones);
+        return true;
     }
 }
