@@ -6,5 +6,8 @@ export function getConfig(name:string): ConfigT {
   if (!config) {
     throw new Error(`Config by name ${name} not found.`);
   }
-  return config as ConfigT;
+  return {
+    bot:config.bot,
+    files: config.files
+  }  as ConfigT;
 }

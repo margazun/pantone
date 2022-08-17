@@ -1,6 +1,7 @@
 import { Grabber } from './types/grabber';
 import { PantoneI, } from './types/pantone.type';
 import * as fs from 'fs';
+import { getConfig } from './config';
 
 
 const main = async () => {
@@ -10,12 +11,9 @@ const main = async () => {
     grabber.stop();
 }
 
-main();
+// main();
 
-// (async () => {
-//     const grabber = new Grabber();
-//     await grabber.start();
-//     const newColors = await grabber.hasUpdate();
-//     await grabber.stop();
-//     console.log(newColors);
-// })()
+(async () => {
+    const config = getConfig('env_');
+    console.log(JSON.stringify(config, null, 2));
+})()
