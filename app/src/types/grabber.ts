@@ -7,8 +7,6 @@ export class Grabber {
     private brouser: any;
     private page: any;
     private baseUrl = "https://www.e-paint.co.uk/lab-hlc-rgb-lrv-values.asp?cRange=Pantone+U&cRef="
-    private rgbContainer = '#main_body > div > div.right.right-col > div.g-box-w > div.g-box-w.lab-result > span:nth-child(4) > div:nth-child(3) > p:nth-child(2)'
-    private labContainer = '#main_body > div > div.right.right-col > div.g-box-w > div.g-box-w.lab-result > span:nth-child(4) > div:nth-child(2)'
 
     async start() {
         try {
@@ -46,9 +44,8 @@ export class Grabber {
         url = url.replace(/cRange=Pantone\+U/, `cRange=Pantone+${pallete}`)
 
         let colorName: string = `${color} ${pallete}`;
-        // pallete = pallete === 'C'? 'C' : 'U'
         url = url + color + '+' + pallete;
-        // url = url.replace(/.$/, pallete);
+        url = url.replace(/ /, '+');
         console.log(url);
         await this.gotoPage(url);
         
@@ -61,12 +58,14 @@ export class Grabber {
 
         return {
             colorName,
-            pallete,
-            lab: result_lab,
-            rgb: result_rgb,
-            hex: result_hex,
-            cmyk: result_cmyk,
-            hlc: result_hlc,
+            [pallete.toLowerCase()]: {
+                pallete,
+                lab: result_lab,
+                rgb: result_rgb,
+                hex: result_hex,
+                cmyk: result_cmyk,
+                hlc: result_hlc,
+            }
         }
     }
     
