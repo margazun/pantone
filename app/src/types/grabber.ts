@@ -2,6 +2,8 @@ import * as puppeteer from 'puppeteer';
 import * as fs from 'fs';
 
 import { PantoneI, PantoneSI } from './pantone.type';
+import { getConfig } from '../config';
+import { ConfigT } from './config';
 
 export class Grabber {
     private brouser: any;
@@ -208,5 +210,24 @@ export class Grabber {
         result.push(parseFloat(text));
 
         return result;
+    }
+
+    async hasUpdate(): Promise<{hasUpdate: boolean, result: string[]}> {
+        const config: ConfigT = getConfig('env_');
+        const grabber = new Grabber();
+        const result: string[] = [];
+        await grabber.start();
+        const pantoneList = await grabber.getPantoneList();
+        let list: PantoneI[] = JSON.parse(fs.readFileSync(config.files.pantones, { encoding: 'utf-8'}));
+        pantoneList.forEach(color => {
+            let findColor = list.filter(el => (el.colorName === color));
+            if (findColor.length === 0) {
+                result.push(color);
+            }
+        });
+        return {
+            hasUpdate: result.length !== 0,
+            result
+        };
     }
 }

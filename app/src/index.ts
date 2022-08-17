@@ -1,6 +1,8 @@
 import { Grabber } from './types/grabber';
 import { PantoneI, } from './types/pantone.type';
 import * as fs from 'fs';
+import { getConfig } from './config';
+import { ConfigT } from './types';
 
 
 const main = async () => {
@@ -23,4 +25,32 @@ const main = async () => {
     console.log('Done');
 }
 
-main();
+// main();
+
+
+// async function hasUpdate(): Promise<{hasUpdate: boolean, result: string[]}> {
+//     const config: ConfigT = getConfig('env_');
+//     const grabber = new Grabber();
+//     const result: string[] = [];
+//     await grabber.start();
+//     const pantoneList = await grabber.getPantoneList();
+//     let list: PantoneI[] = JSON.parse(fs.readFileSync(config.files.pantones, { encoding: 'utf-8'}));
+//     pantoneList.forEach(color => {
+//         let findColor = list.filter(el => (el.colorName === color));
+//         if (findColor.length === 0) {
+//             result.push(color);
+//         }
+//     });
+//     return {
+//         hasUpdate: result.length !== 0,
+//         result
+//     };
+// }
+
+(async () => {
+    const grabber = new Grabber();
+    await grabber.start();
+    const newColors = await grabber.hasUpdate();
+    await grabber.stop();
+    console.log(newColors);
+})()

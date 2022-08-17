@@ -3,4 +3,7 @@ export type ConfigT = {
     token: string,
     name: string
   }
+  files: {
+    pantones: string
+  }
 }
