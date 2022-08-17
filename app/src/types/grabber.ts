@@ -232,7 +232,7 @@ export class Grabber {
         };
     }
 
-    async update(list: string[]): Promise<boolean> {
+    private async _update(list: string[]): Promise<boolean> {
         let updatedColors: PantoneI[] = [];
         for (let i = 0; i < list.length; i++) {
             const color = list[i];
@@ -248,4 +248,12 @@ export class Grabber {
         saveJson(newPantones, config.files.pantones);
         return true;
     }
+
+    async update(): Promise<void> {
+        const result = await this.hasUpdate();
+        if (result.hasUpdate) {
+            await this._update(result.result)
+        }
+        return;
+    } 
 }
